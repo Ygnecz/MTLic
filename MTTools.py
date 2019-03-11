@@ -2,10 +2,11 @@
 
 import sys
 import struct
+from SHA256 import SHA256
 
 SWIDTab = b'TN0BYX18S5HZ4IA67DGF3LPCJQRUK9MW2VE'
 
-Magic1 = [
+SHA256_K = (
     0x0548D563, 0x98308EAB, 0x37AF7CCC, 0xDFBC4E3C,
     0xF125AAC9, 0xEC98ACB8, 0x8B540795, 0xD3E0EF0E,
     0x4904D6E5, 0x0DA84981, 0x9A1F8452, 0x00EB7EAA,
@@ -21,11 +22,15 @@ Magic1 = [
     0x463D8288, 0xC83253C3, 0x33EA314A, 0x9696DC92,
     0xD041CE9A, 0xE5477160, 0xC7656BE8, 0x5179FE33,
     0x1F4726F1, 0x5F393AF0, 0x26E2D004, 0x6D020245,
-    0x85FDF6D7, 0xB0237C56, 0xFF5FBD94, 0xA8B3F534 ]
+    0x85FDF6D7, 0xB0237C56, 0xFF5FBD94, 0xA8B3F534 )
 
-Magic2 = [
+SHA256_I = (
     0x5B653932, 0x7B145F8F, 0x71FFB291, 0x38EF925F,
-    0x03E1AAF9, 0x4A2057CC, 0x4CAF4DD9, 0x643CC9EA ]
+    0x03E1AAF9, 0x4A2057CC, 0x4CAF4DD9, 0x643CC9EA )
+
+class MT_SHA256(SHA256):
+    K = SHA256_K
+    INITIAL_STATE = SHA256.State(*SHA256_I)
 
 def MTBse64Encode(s, padd = False):
     b64s = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -105,17 +110,17 @@ def printBytes(val):
 def MT_Transform(s):
     s = list(struct.unpack('>'+'I'*(len(s) // 4), s))
     for i in range(16):
-        s[(i+2) % 4] = to32bits(s[(i+2) % 4] - s[(i+0) % 4] - Magic1[i*4+0])
-        s[(i+3) % 4] = to32bits((rotl(s[(i+0) % 4], Magic1[i*4+0] & 0x0F) ^ s[(i+3) % 4]) + s[(i+0) % 4])
+        s[(i+2) % 4] = to32bits(s[(i+2) % 4] - s[(i+0) % 4] - SHA256_K[i*4+0])
+        s[(i+3) % 4] = to32bits((rotl(s[(i+0) % 4], SHA256_K[i*4+0] & 0x0F) ^ s[(i+3) % 4]) + s[(i+0) % 4])
 
-        s[(i+1) % 4] = to32bits(s[(i+1) % 4] - s[(i+3) % 4] - Magic1[i*4+1])
-        s[(i+2) % 4] = to32bits((rotl(s[(i+1) % 4], Magic1[i*4+1] & 0x0F) ^ s[(i+2) % 4]) + s[(i+1) % 4])
+        s[(i+1) % 4] = to32bits(s[(i+1) % 4] - s[(i+3) % 4] - SHA256_K[i*4+1])
+        s[(i+2) % 4] = to32bits((rotl(s[(i+1) % 4], SHA256_K[i*4+1] & 0x0F) ^ s[(i+2) % 4]) + s[(i+1) % 4])
 
-        s[(i+0) % 4] = to32bits(s[(i+0) % 4] - s[(i+2) % 4] - Magic1[i*4+2])
-        s[(i+1) % 4] = to32bits((rotl(s[(i+2) % 4], Magic1[i*4+2] & 0x0F) ^ s[(i+1) % 4]) + s[(i+2) % 4])
+        s[(i+0) % 4] = to32bits(s[(i+0) % 4] - s[(i+2) % 4] - SHA256_K[i*4+2])
+        s[(i+1) % 4] = to32bits((rotl(s[(i+2) % 4], SHA256_K[i*4+2] & 0x0F) ^ s[(i+1) % 4]) + s[(i+2) % 4])
 
-        s[(i+3) % 4] = to32bits(s[(i+3) % 4] - s[(i+1) % 4] - Magic1[i*4+3])
-        s[(i+0) % 4] = to32bits((rotl(s[(i+3) % 4], Magic1[i*4+3] & 0x0F) ^ s[(i+0) % 4]) + s[(i+3) % 4])
+        s[(i+3) % 4] = to32bits(s[(i+3) % 4] - s[(i+1) % 4] - SHA256_K[i*4+3])
+        s[(i+0) % 4] = to32bits((rotl(s[(i+3) % 4], SHA256_K[i*4+3] & 0x0F) ^ s[(i+0) % 4]) + s[(i+3) % 4])
 
     ret = b''
     for x in s:
@@ -126,17 +131,17 @@ def MT_Transform(s):
 def MT_TransformRev(s):
     s = list(struct.unpack('>'+'I'*(len(s) // 4), s))
     for i in reversed(range(16)):
-        s[(i+0) % 4] = to32bits(rotl(s[(i+3) % 4], Magic1[i*4+3] & 0x0F) ^ (s[(i+0) % 4] - s[(i+3) % 4]))
-        s[(i+3) % 4] = to32bits(s[(i+3) % 4] + s[(i+1) % 4] + Magic1[i*4+3])
+        s[(i+0) % 4] = to32bits(rotl(s[(i+3) % 4], SHA256_K[i*4+3] & 0x0F) ^ (s[(i+0) % 4] - s[(i+3) % 4]))
+        s[(i+3) % 4] = to32bits(s[(i+3) % 4] + s[(i+1) % 4] + SHA256_K[i*4+3])
 
-        s[(i+1) % 4] = to32bits(rotl(s[(i+2) % 4], Magic1[i*4+2] & 0x0F) ^ (s[(i+1) % 4] - s[(i+2) % 4]))
-        s[(i+0) % 4] = to32bits(s[(i+0) % 4] + s[(i+2) % 4] + Magic1[i*4+2])
+        s[(i+1) % 4] = to32bits(rotl(s[(i+2) % 4], SHA256_K[i*4+2] & 0x0F) ^ (s[(i+1) % 4] - s[(i+2) % 4]))
+        s[(i+0) % 4] = to32bits(s[(i+0) % 4] + s[(i+2) % 4] + SHA256_K[i*4+2])
 
-        s[(i+2) % 4] = to32bits(rotl(s[(i+1) % 4], Magic1[i*4+1] & 0x0F) ^ (s[(i+2) % 4] - s[(i+1) % 4]))
-        s[(i+1) % 4] = to32bits(s[(i+1) % 4] + s[(i+3) % 4] + Magic1[i*4+1])
+        s[(i+2) % 4] = to32bits(rotl(s[(i+1) % 4], SHA256_K[i*4+1] & 0x0F) ^ (s[(i+2) % 4] - s[(i+1) % 4]))
+        s[(i+1) % 4] = to32bits(s[(i+1) % 4] + s[(i+3) % 4] + SHA256_K[i*4+1])
 
-        s[(i+3) % 4] = to32bits(rotl(s[(i+0) % 4], Magic1[i*4+0] & 0x0F) ^ (s[(i+3) % 4] - s[(i+0) % 4]))
-        s[(i+2) % 4] = to32bits(s[(i+2) % 4] + s[(i+0) % 4] + Magic1[i*4+0])
+        s[(i+3) % 4] = to32bits(rotl(s[(i+0) % 4], SHA256_K[i*4+0] & 0x0F) ^ (s[(i+3) % 4] - s[(i+0) % 4]))
+        s[(i+2) % 4] = to32bits(s[(i+2) % 4] + s[(i+0) % 4] + SHA256_K[i*4+0])
 
     ret = b''
     for x in s:
@@ -145,79 +150,7 @@ def MT_TransformRev(s):
     return ret
 
 def MT_Hash(data):
-    dataLen = len(data)
-
-    # Allocate arrays
-    WA  = [0] * 16
-    MM2 = [0] * 8
-    MM3 = [0] * 64
-    MMO = [0] * 8
-
-    # Fill with data
-    for i in range(dataLen):
-        WA[i // 4] |= data[i] << ((i*8) % 32)
-    WA[dataLen // 4] = 0x80 << ((dataLen % 4)*8)
-    WA[14] = dataLen >> 29
-    WA[15] = swap32(dataLen*8)
-
-    MM2[0] = Magic2[3]
-    MM2[1] = Magic2[4]
-    MM2[2] = Magic2[7]
-    MM2[3] = Magic2[5]
-    MM2[4] = Magic2[6]
-    MM2[5] = Magic2[2]
-    MM2[6] = Magic2[1]
-    MM2[7] = Magic2[0]
-    EDI_   = Magic2[4]
-
-    for i in range(64):
-        MM2[2] = to32bits((((MM2[3] ^ MM2[4]) & MM2[1]) ^ MM2[4]) + \
-                          (rotr(EDI_, 11) ^ rotr(EDI_, 6) ^ rotr(EDI_, 25)) + \
-                          Magic1[i] + MM2[2])
-        if i < 16:
-            MM3[i] = swap32(WA[i]);
-            MM2[1] = to32bits(MM3[i] + MM2[2] + MM2[0])
-        else:
-            MM3[i] = to32bits(MM3[i-16+9] + MM3[i-16] + \
-                              (rotr(MM3[i-16+14], 19) ^ rotr(MM3[i-16+14], 17) ^ (MM3[i-16+14] >> 10)) + \
-                              (rotr(MM3[i-16+ 1], 18) ^ rotr(MM3[i-16+ 1],  7) ^ (MM3[i-16+ 1] >>  3)))
-
-            MM2[1] = to32bits(MM3[i] + MM2[2] + MM2[0])
-
-
-        W = to32bits((rotr(MM2[7], 13) ^ rotr(MM2[7], 2) ^ rotr(MM2[7], 22)) + \
-                     ((MM2[5] & (MM2[6] | MM2[7])) | (MM2[6] & MM2[7])) + \
-                     MM3[i] + MM2[2])
-
-        MM2[2] = MM2[4];
-        MM2[4] = MM2[3];
-        MM2[3] = EDI_;
-
-        W2 = MM2[6];
-        MM2[6] = MM2[7];
-        MM2[0] = MM2[5];
-        MM2[5] = W2;
-
-        MM2[7] = W;
-        EDI_ = MM2[1];
-
-    MMO[0] = MM2[7]
-    MMO[1] = MM2[6]
-    MMO[2] = MM2[5]
-    MMO[3] = MM2[0]
-    MMO[4] = MM2[1]
-    MMO[5] = MM2[3]
-    MMO[6] = MM2[4]
-    MMO[7] = MM2[2]
-
-    for i in range(8):
-        MMO[i] = to32bits(MMO[i] + Magic2[i])
-
-    ret = b''
-    for x in MMO:
-        ret += x.to_bytes(4, 'big')
-
-    return bytearray(ret)
+    return bytearray(MT_SHA256(data).digest())
 
 def MT_SWSNToSWID(s):
     ret = ""

@@ -62,7 +62,7 @@ String serial is `JKLMNBYX` or `JKLM-NBYX`.
 Next byte may be RouterOS major version and next byte `01` is License Level. Next bytes may be features bits.
 
 ## License signature
-Hashing converted bytes  (see function MT_hash). Algo name ??
+Hashing converted bytes with modified SHA256 with Mikrotik custom round constants and initial hash values
 ```
 c4 bc fe b4 cc 6d 0d aa 40 88 38 1b 68 ba 10 fd
 e3 1a 2f 10 f9 29 ca 90 80 17 ad af 77 e1 59 3f
@@ -101,12 +101,12 @@ Y =
 2c d6 61 75 75 2f 25 b3 90 f7 1b 94 f9 ca 7c 67
 83 67 2a af 6d 47 e6 ea 25 43 32 63 4c 66 14 27
 ```
-Computing MT_Hash of Y
+Computing hash2 of Y with modified SHA256
 ```
 06 df e9 d4 92 42 e9 cb ae 55 29 77 39 bd 61 7d <--
 36 6a b7 02 14 07 78 13 64 c9 fb 4f c1 50 bb b4
 ```
-Compare License[16..31] with first 16 bytes of MT_Hash(Result)
+Compare License[16..31] with first 16 bytes of hash2
 ```
 06 df e9 d4 ... == 06 df e9 d4 ...
 ```

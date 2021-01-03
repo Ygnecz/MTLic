@@ -93,6 +93,7 @@ PubKey =
 E8 C4 9A EF 48 6B D1 A4 E2 E9 6C 27 F0 1E 3E 32
 ```
 Y = signature * PubKey + hash * G
+
 Gx for Curve25519 is `9`.
 
 Result of computation
